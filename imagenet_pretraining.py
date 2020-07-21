@@ -390,7 +390,7 @@ class ResNet50(torch.nn.Module):
 
 def run_epoch(model, optimizer, dataloader, train, len_dataloader):
   
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     if train:
         model.train()
     else:
@@ -436,11 +436,12 @@ def run_epoch(model, optimizer, dataloader, train, len_dataloader):
 
 
 def main():
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    print(device)
     model = ResNet50(nclasses=1000).to(device)
-    
+    print("model initialized")
     train_dir =  "../../../storage/group/dataset_mirrors/old_common_datasets/imagenet/Data/train"
-    val_dir = "../../../storage/group/dataset_mirrors/old_common_datasets/imagenet/Data/val"
+    #val_dir = "../../../storage/group/dataset_mirrors/old_common_datasets/imagenet/Data/val"
     
     train_dataset = datasets.ImageFolder(
         train_dir,
@@ -450,22 +451,22 @@ def main():
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225]),
         ]))
-    
-    val_dataset = datasets.ImageFolder(
-        val_dir,
-        transforms.Compose([
-            transforms.Resize(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225]),
-        ]))
-    
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16,
-                                                   shuffle=True, num_workers=2,
+    print("train_dataset made")
+    #val_dataset = datasets.ImageFolder(
+    #    val_dir,
+    #    transforms.Compose([
+    #        transforms.Resize(224),
+    #        transforms.ToTensor(),
+    #        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    #                                 std=[0.229, 0.224, 0.225]),
+    #    ]))
+    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [len(train_dataset)-50000, 50000])
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32,
+                                                   shuffle=True, num_workers=4,
                                                    pin_memory=True)
     
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=64,
-                                                   shuffle=False, num_workers=2,
+                                                   shuffle=False, num_workers=4,
                                                    pin_memory=True)
     
     
